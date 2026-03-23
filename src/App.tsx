@@ -3,6 +3,7 @@ import { HelpCircle, Upload, RefreshCw, Sparkles, Download, Trash2, ZoomIn, Zoom
 import { ImageCompare } from './components/ImageCompare';
 import { ApiKeyModal } from './components/ApiKeyModal';
 import { generatePrompt, renderImage } from './services/api';
+import { updateApiKey } from './config/api';
 
 interface Subject {
   id: string;
@@ -120,9 +121,11 @@ function App() {
       return;
     }
 
+    updateApiKey('deepseek', apiKeys.deepseek);
+
     setIsLoading(true);
     try {
-      const prompt = await generatePrompt(subjects, environment, apiKeys.deepseek);
+      const prompt = await generatePrompt(subjects, environment);
       setGeneratedPrompt(prompt);
     } catch (error) {
       console.error('生成Prompt失败:', error);
@@ -142,9 +145,11 @@ function App() {
       return;
     }
 
+    updateApiKey('nanoBanana', apiKeys.nanoBanana);
+
     setIsLoading(true);
     try {
-      const result = await renderImage(uploadedImage, generatedPrompt, apiKeys.nanoBanana);
+      const result = await renderImage(uploadedImage, generatedPrompt);
       setRenderedImage(result);
     } catch (error) {
       console.error('渲染失败:', error);
@@ -534,15 +539,23 @@ function App() {
               <section>
                 <h2 className="text-lg font-semibold text-gray-800 mb-4">生成的Prompt</h2>
                 <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-                  <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
-                    {generatedPrompt}
-                  </p>
+                  <textarea
+                    value={generatedPrompt}
+                    onChange={(e) => setGeneratedPrompt(e.target.value)}
+                    className="w-full h-32 bg-transparent text-sm text-gray-700 whitespace-pre-wrap leading-relaxed outline-none resize-none"
+                  />
                 </div>
                 <button
                   onClick={() => navigator.clipboard.writeText(generatedPrompt)}
                   className="w-full mt-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm text-gray-700 transition-colors"
                 >
                   复制Prompt
+                </button>
+                <button
+                  onClick={() => setGeneratedPrompt('')}
+                  className="w-full mt-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm text-gray-700 transition-colors"
+                >
+                  清空
                 </button>
               </section>
             )}

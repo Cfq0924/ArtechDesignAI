@@ -1,3 +1,5 @@
+import { config } from '../config/api';
+
 interface Subject {
   id: string;
   name: string;
@@ -86,8 +88,16 @@ const styleLabels: Record<string, string> = {
 export async function generatePrompt(
   subjects: Subject[],
   environment: EnvironmentSettings,
-  apiKey: string
+  apiKey?: string
 ): Promise<string> {
+  const deepseekConfig = config.deepseek;
+  const effectiveApiKey = apiKey || deepseekConfig.apiKey;
+
+  if (!effectiveApiKey) {
+    console.warn('DeepSeek API Key 未配置，使用本地生成 fallback');
+    return generateFallbackPrompt(subjects, environment);
+  }
+
   // 构建主体描述
   const subjectDescriptions = subjects
     .filter(s => s.name && (s.material || s.style || s.description))
@@ -96,10 +106,10 @@ export async function generatePrompt(
       if (s.name) parts.push(s.name);
       if (s.description) parts.push(s.description);
       if (s.material && materialLabels[s.material]) {
-        parts.push(`材质: ${materialLabels[s.material]}`);
+        parts.push(`材质：${materialLabels[s.material]}`);
       }
       if (s.style && styleLabels[s.style]) {
-        parts.push(`风格: ${styleLabels[s.style]}`);
+        parts.push(`风格：${styleLabels[s.style]}`);
       }
       return parts.join(', ');
     })
@@ -111,7 +121,7 @@ export async function generatePrompt(
   const lightingDesc = lightingLabels[environment.lighting] || environment.lighting;
   const atmosphereDesc = atmosphereLabels[environment.atmosphere] || environment.atmosphere;
 
-  const prompt = `请为以下建筑设计生成专业的渲染Prompt：
+  const prompt = `请为以下建筑设计生成专业的渲染 Prompt：
 
 建筑主体：
 ${subjectDescriptions || '未指定主体'}
@@ -122,46 +132,44 @@ ${subjectDescriptions || '未指定主体'}
 - 光照：${lightingDesc}
 - 氛围：${atmosphereDesc}
 
-请生成一段详细、专业的建筑渲染Prompt，用于AI图像生成。要求：
+请生成一段详细、专业的建筑渲染 Prompt，用于 AI 图像生成。要求：
 1. 描述建筑外观和材质质感
 2. 描述环境氛围和光线效果
 3. 使用专业的建筑设计术语
-4. 确保prompt简洁且具有画面感`;
+4. 确保 prompt 简洁且具有画面感`;
 
-  // 调用DeepSeek API
   try {
-    const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+    const response = await fetch(deepseekConfig.baseUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
+        'Authorization': `Bearer ${effectiveApiKey}`
       },
       body: JSON.stringify({
-        model: 'deepseek-chat',
+        model: deepseekConfig.model,
         messages: [
           {
             role: 'system',
-            content: '你是一位专业的建筑渲染专家，擅长生成高质量的建筑渲染Prompt。请直接输出Prompt内容，不要额外的解释说明。'
+            content: deepseekConfig.systemPrompt
           },
           {
             role: 'user',
             content: prompt
           }
         ],
-        temperature: 0.7,
-        max_tokens: 1000
+        temperature: deepseekConfig.temperature,
+        max_tokens: deepseekConfig.maxTokens
       })
     });
 
     if (!response.ok) {
-      throw new Error(`API请求失败: ${response.status}`);
+      throw new Error(`API 请求失败：${response.status}`);
     }
 
     const data = await response.json();
     return data.choices[0].message.content.trim();
   } catch (error) {
-    console.error('DeepSeek API调用失败:', error);
-    // 返回本地生成的备用prompt
+    console.error('DeepSeek API 调用失败:', error);
     return generateFallbackPrompt(subjects, environment);
   }
 }
@@ -172,22 +180,20 @@ function generateFallbackPrompt(
 ): string {
   const parts: string[] = [];
 
-  // 添加主体描述
   subjects.forEach(s => {
     if (s.material && s.style) {
       const material = materialLabels[s.material] || s.material;
       const style = styleLabels[s.style] || s.style;
-      parts.push(`${s.name || '建筑'}: ${style}风格的${material}表面, ${s.description || ''}`);
+      parts.push(`${s.name || '建筑'}: ${style}风格的${material}表面，${s.description || ''}`);
     } else if (s.material) {
       const material = materialLabels[s.material] || s.material;
-      parts.push(`${s.name || '建筑'}: ${material}表面, ${s.description || ''}`);
+      parts.push(`${s.name || '建筑'}: ${material}表面，${s.description || ''}`);
     } else if (s.style) {
       const style = styleLabels[s.style] || s.style;
-      parts.push(`${s.name || '建筑'}: ${style}风格, ${s.description || ''}`);
+      parts.push(`${s.name || '建筑'}: ${style}风格，${s.description || ''}`);
     }
   });
 
-  // 添加环境描述
   const timeDesc = timeLabels[environment.time] || environment.time;
   const weatherDesc = weatherLabels[environment.weather] || environment.weather;
   const lightingDesc = lightingLabels[environment.lighting] || environment.lighting;
@@ -200,34 +206,40 @@ function generateFallbackPrompt(
     `${atmosphereDesc}氛围`
   ];
 
-  return `建筑设计渲染, ${parts.join(', ')}, ${envParts.join(', ')}, 高质量建筑渲染, 照片级真实感, 细节丰富, 专业摄影角度`;
+  return `建筑设计渲染，${parts.join(', ')}, ${envParts.join(', ')}, 高质量建筑渲染，照片级真实感，细节丰富，专业摄影角度`;
 }
 
 export async function renderImage(
   imageData: string,
   prompt: string,
-  apiKey: string
+  apiKey?: string
 ): Promise<string> {
-  // 将base64图片转换为blob
+  const nanoBananaConfig = config.nanoBanana;
+  const effectiveApiKey = apiKey || nanoBananaConfig.apiKey;
+
+  if (!effectiveApiKey) {
+    console.warn('Nano Banana API Key 未配置，使用本地生成 fallback');
+    return await generateDemoRender(imageData, prompt);
+  }
+
   const response = await fetch(imageData);
   const blob = await response.blob();
 
   try {
-    // 调用Nano Banana2 API
     const formData = new FormData();
-    formData.append('image', blob, 'white_model.png');
-    formData.append('prompt', prompt);
+    formData.append(nanoBananaConfig.imageParam, blob, 'white_model.png');
+    formData.append(nanoBananaConfig.promptParam, prompt);
 
-    const renderResponse = await fetch('https://api.nanobanana.io/v2/render', {
+    const renderResponse = await fetch(nanoBananaConfig.baseUrl, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${apiKey}`
+        'Authorization': `Bearer ${effectiveApiKey}`
       },
       body: formData
     });
 
     if (!renderResponse.ok) {
-      throw new Error(`渲染API请求失败: ${renderResponse.status}`);
+      throw new Error(`渲染 API 请求失败：${renderResponse.status}`);
     }
 
     const renderData = await renderResponse.json();
@@ -240,19 +252,13 @@ export async function renderImage(
       throw new Error('渲染结果无效');
     }
   } catch (error) {
-    console.error('Nano Banana2 API调用失败:', error);
-    // 返回一个示例渲染图作为演示
+    console.error('Nano Banana API 调用失败:', error);
     return await generateDemoRender(imageData, prompt);
   }
 }
 
 async function generateDemoRender(imageData: string, _prompt: string): Promise<string> {
-  // 这个函数生成一个简单的演示效果
-  // 在实际应用中，这里应该返回真实的渲染结果
-  // 为了演示，我们返回一个稍有不同的图片效果
-
   return new Promise((resolve) => {
-    // 创建canvas来处理图片
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     const img = new Image();
@@ -262,10 +268,8 @@ async function generateDemoRender(imageData: string, _prompt: string): Promise<s
       canvas.height = img.height;
 
       if (ctx) {
-        // 绘制原图
         ctx.drawImage(img, 0, 0);
 
-        // 添加一些简单的处理效果来模拟渲染
         ctx.globalCompositeOperation = 'overlay';
         ctx.fillStyle = 'rgba(255, 220, 180, 0.2)';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -274,7 +278,6 @@ async function generateDemoRender(imageData: string, _prompt: string): Promise<s
         ctx.filter = 'saturate(1.2) contrast(1.1)';
         ctx.drawImage(img, 0, 0);
 
-        // 添加光晕效果
         const gradient = ctx.createRadialGradient(
           canvas.width * 0.8, canvas.height * 0.2, 0,
           canvas.width * 0.8, canvas.height * 0.2, canvas.width * 0.5
@@ -289,7 +292,6 @@ async function generateDemoRender(imageData: string, _prompt: string): Promise<s
     };
 
     img.onerror = () => {
-      // 如果图片加载失败，返回原图
       resolve(imageData);
     };
 

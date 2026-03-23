@@ -29,7 +29,8 @@ pnpm preview          # Preview production build
 
 **Source Structure:**
 - `src/App.tsx` - Main application component, contains all UI logic and state
-- `src/services/api.ts` - External API integrations (DeepSeek for prompt generation, Nano Banana2 for image rendering)
+- `src/services/api.ts` - External API integrations (DeepSeek, Nano Banana2)
+- `src/config/api.ts` - API configuration (base URLs, models, system prompts, parameters)
 - `src/components/` - Reusable UI components (ImageCompare, ApiKeyModal, ErrorBoundary)
 - `src/hooks/` - Custom React hooks
 - `src/lib/utils.ts` - Utility functions (`cn` for className merging)
@@ -41,8 +42,13 @@ pnpm preview          # Preview production build
 - Image processing uses HTML5 Canvas for demo renders
 
 **External APIs:**
-- DeepSeek Chat API (`https://api.deepseek.com/v1/chat/completions`) - generates rendering prompts
-- Nano Banana2 API (`https://api.nanobanana.io/v2/render`) - performs image-to-image rendering
+- DeepSeek Chat API - generates rendering prompts
+  - URL: `https://api.deepseek.com/v1/chat/completions`
+  - Model: `deepseek-chat`
+  - Config: `src/config/api.ts` (systemPrompt, temperature, maxTokens)
+- Nano Banana2 API - performs image-to-image rendering
+  - URL: `https://api.nanobanana.io/v2/render`
+  - Config: `src/config/api.ts` (imageParam, promptParam)
 
 **Vite Plugins:**
 - `vite-plugin-source-identifier` - adds `data-matrix` attributes for source tracking (disabled in prod mode)
