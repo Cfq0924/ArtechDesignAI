@@ -5,12 +5,25 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Build & Development Commands
 
 ```bash
-pnpm dev              # Start development server (auto-installs deps)
-pnpm build            # Production build
-pnpm build:prod       # Production build with BUILD_MODE=prod
-pnpm lint             # Run ESLint
-pnpm preview          # Preview production build
+pnpm install         # Install dependencies
+pnpm dev             # Start development server (auto-installs deps)
+pnpm build           # Production build
+pnpm build:prod      # Production build with BUILD_MODE=prod
+pnpm lint            # Run ESLint
+pnpm preview         # Preview production build
+pnpm clean           # Clean node_modules and cache
 ```
+
+## Environment Variables
+
+Copy `.env.example` to `.env` and configure API keys:
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `VITE_DEEPSEEK_API_KEY` | No | DeepSeek API key for prompt generation |
+| `VITE_NANO_BANANA_API_KEY` | No | Nano Banana2 API key for image rendering |
+
+Note: API keys can also be configured at runtime via the app's API configuration modal.
 
 ## Tech Stack
 
@@ -59,3 +72,7 @@ pnpm preview          # Preview production build
 - Interfaces defined at top of files using them
 - Chinese UI text, English code/interface names
 - Immutability: new objects spread from previous state
+
+## Path Alias
+
+`@/*` resolves to `./src/*` (configured in vite.config.ts)
