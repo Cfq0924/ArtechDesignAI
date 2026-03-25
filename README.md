@@ -31,14 +31,20 @@ pnpm dev           # 启动开发服务器
 
 ## API 配置
 
-本项目使用以下外部 API：
+本项目使用以下外部 API，通过 `.env` 文件配置：
 
-| API | 用途 | 配置项 |
-|-----|------|--------|
-| DeepSeek Chat | 生成渲染 prompt | `VITE_DEEPSEEK_API_KEY` |
-| Nano Banana2 | 图像渲染 | `VITE_NANO_BANANA_API_KEY` |
+| API | 用途 | 必须 | 默认值 |
+|-----|------|------|--------|
+| DeepSeek Chat | 生成渲染 prompt | `VITE_DEEPSEEK_API_KEY` | - |
+| Nano Banana2 | 图像渲染 | `VITE_NANO_BANANA_API_KEY` | - |
 
-API Key 可通过应用界面的「API 配置」按钮设置，或通过环境变量预配置。
+可选配置项：
+
+| 变量 | 默认值 |
+|------|--------|
+| `VITE_DEEPSEEK_BASE_URL` | `https://api.deepseek.com/v1/chat/completions` |
+| `VITE_DEEPSEEK_MODEL` | `deepseek-chat` |
+| `VITE_NANO_BANANA_BASE_URL` | `https://api.nanobanana.io/v2/render` |
 
 ## 项目结构
 
@@ -51,7 +57,6 @@ src/
 │   └── api.ts          # API 调用逻辑
 ├── components/
 │   ├── ImageCompare    # 图像对比组件
-│   ├── ApiKeyModal     # API Key 配置弹窗
 │   └── ErrorBoundary   # 错误边界组件
 ├── hooks/
 │   └── use-mobile.tsx  # 移动端检测钩子
@@ -59,12 +64,16 @@ src/
     └── utils.ts        # 工具函数 (cn)
 ```
 
-## 环境变量（可选）
+## 环境变量
 
 复制 `.env.example` 到 `.env` 并填入你的 API Key：
 
 ```bash
 cp .env.example .env
+```
+
+```bash
+pnpm dev
 ```
 
 ## License

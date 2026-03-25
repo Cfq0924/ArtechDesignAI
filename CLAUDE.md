@@ -20,10 +20,13 @@ Copy `.env.example` to `.env` and configure API keys:
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `VITE_DEEPSEEK_API_KEY` | No | DeepSeek API key for prompt generation |
-| `VITE_NANO_BANANA_API_KEY` | No | Nano Banana2 API key for image rendering |
+| `VITE_DEEPSEEK_API_KEY` | Yes | DeepSeek API key for prompt generation |
+| `VITE_DEEPSEEK_BASE_URL` | No | DeepSeek API URL (defaults to official endpoint) |
+| `VITE_DEEPSEEK_MODEL` | No | DeepSeek model name (default: deepseek-chat) |
+| `VITE_NANO_BANANA_API_KEY` | Yes | Nano Banana2 API key for image rendering |
+| `VITE_NANO_BANANA_BASE_URL` | No | Nano Banana2 API URL (defaults to official endpoint) |
 
-Note: API keys can also be configured at runtime via the app's API configuration modal.
+API configuration is file-based only, configured via `.env` file.
 
 ## Tech Stack
 
@@ -44,13 +47,13 @@ Note: API keys can also be configured at runtime via the app's API configuration
 - `src/App.tsx` - Main application component, contains all UI logic and state
 - `src/services/api.ts` - External API integrations (DeepSeek, Nano Banana2)
 - `src/config/api.ts` - API configuration (base URLs, models, system prompts, parameters)
-- `src/components/` - Reusable UI components (ImageCompare, ApiKeyModal, ErrorBoundary)
+- `src/components/` - Reusable UI components (ImageCompare, ErrorBoundary)
 - `src/hooks/` - Custom React hooks
 - `src/lib/utils.ts` - Utility functions (`cn` for className merging)
 
 **Key Patterns:**
 - All state managed in App.tsx, passed down to child components
-- API keys stored in component state (not persisted), configured via modal
+- API keys read from environment variables via `import.meta.env`
 - Fallback logic: API failures return locally-generated results
 - Image processing uses HTML5 Canvas for demo renders
 

@@ -1,9 +1,7 @@
 import { useState, useCallback } from 'react';
-import { HelpCircle, Upload, RefreshCw, Sparkles, Download, Trash2, ZoomIn, ZoomOut, Plus, Sun, Cloud, Lightbulb, Sparkle, Clock, CloudRain, SunMedium } from 'lucide-react';
+import { Upload, RefreshCw, Sparkles, Download, Trash2, ZoomIn, ZoomOut, Plus, Sun, Cloud, Lightbulb, Sparkle, Clock, CloudRain, SunMedium } from 'lucide-react';
 import { ImageCompare } from './components/ImageCompare';
-import { ApiKeyModal } from './components/ApiKeyModal';
 import { generatePrompt, renderImage } from './services/api';
-import { updateApiKey } from './config/api';
 
 interface Subject {
   id: string;
@@ -46,8 +44,6 @@ function App() {
   const [generatedPrompt, setGeneratedPrompt] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const [isRecognizing, setIsRecognizing] = useState(false);
-  const [showApiKeyModal, setShowApiKeyModal] = useState(false);
-  const [apiKeys, setApiKeys] = useState<{ deepseek?: string; nanoBanana?: string }>({});
   const [zoom, setZoom] = useState(1);
   const [fileName, setFileName] = useState<string>('');
   const [fileResolution, setFileResolution] = useState<string>('');
@@ -116,13 +112,6 @@ function App() {
   }, []);
 
   const handleGeneratePrompt = useCallback(async () => {
-    if (!apiKeys.deepseek) {
-      setShowApiKeyModal(true);
-      return;
-    }
-
-    updateApiKey('deepseek', apiKeys.deepseek);
-
     setIsLoading(true);
     try {
       const prompt = await generatePrompt(subjects, environment);
@@ -132,20 +121,13 @@ function App() {
       alert('生成Prompt失败，请检查API配置');
     }
     setIsLoading(false);
-  }, [subjects, environment, apiKeys]);
+  }, [subjects, environment]);
 
   const handleRender = useCallback(async () => {
-    if (!apiKeys.nanoBanana) {
-      setShowApiKeyModal(true);
-      return;
-    }
-
     if (!uploadedImage || !generatedPrompt) {
       alert('请先上传图片并生成Prompt');
       return;
     }
-
-    updateApiKey('nanoBanana', apiKeys.nanoBanana);
 
     setIsLoading(true);
     try {
@@ -156,7 +138,7 @@ function App() {
       alert('渲染失败，请检查API配置');
     }
     setIsLoading(false);
-  }, [uploadedImage, generatedPrompt, apiKeys]);
+  }, [uploadedImage, generatedPrompt]);
 
   const handleSaveRenderedImage = useCallback(() => {
     if (!renderedImage) return;
@@ -172,11 +154,6 @@ function App() {
     setEnvironment(defaultEnvironment);
     setGeneratedPrompt('');
     setRenderedImage(null);
-  }, []);
-
-  const handleApiKeySave = useCallback((keys: { deepseek?: string; nanoBanana?: string }) => {
-    setApiKeys(keys);
-    setShowApiKeyModal(false);
   }, []);
 
   const getTimeIcon = (time: string) => {
@@ -203,13 +180,6 @@ function App() {
       <header className="bg-white border-b border-gray-200 px-6 py-4">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-gray-800">白模图转渲染工具</h1>
-          <button
-            onClick={() => setShowApiKeyModal(true)}
-            className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
-          >
-            <HelpCircle className="w-4 h-4" />
-            API配置
-          </button>
         </div>
       </header>
 
@@ -601,14 +571,6 @@ function App() {
         </div>
       </div>
 
-      {/* API Key Modal */}
-      {showApiKeyModal && (
-        <ApiKeyModal
-          onClose={() => setShowApiKeyModal(false)}
-          onSave={handleApiKeySave}
-          initialKeys={apiKeys}
-        />
-      )}
     </div>
   );
 }
